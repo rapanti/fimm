@@ -1,0 +1,33 @@
+[project]
+name = "fimm"
+version = "0.0.1"
+description = "Finetune PyTorch Image Models with TIMM"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = ["Machine Learning", "Deep Learning", "Image", "Fine-Tuning"]
+authors = [
+  { name = "Ivo Rapant", email = "rapanti@cs.uni-freiburg.de" }
+]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: Unix",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Build Tools",
+]
+
+dependencies = ["timm"]
+
+[project.urls]
+"Homepage" = "https://github.com/rapati/fimm"
+"Bug Reports" = "https://github.com/rapati/fimm"
+"Source" = "https://github.com/rapati/fimm"
+
+[project.scripts]
+train = "fimm.train:main"
+validate = "fimm.validate:main"
