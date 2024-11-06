@@ -1,6 +1,6 @@
 [project]
 name = "fimm"
-version = "0.0.1"
+version = "0.0.1.post1"
 description = "Finetune PyTorch Image Models with TIMM"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,9 +24,9 @@ classifiers = [
 dependencies = ["timm"]
 
 [project.urls]
-"Homepage" = "https://github.com/rapati/fimm"
-"Bug Reports" = "https://github.com/rapati/fimm"
-"Source" = "https://github.com/rapati/fimm"
+"Homepage" = "https://github.com/rapanti/fimm"
+"Bug Reports" = "https://github.com/rapanti/fimm/issues"
+"Source" = "https://github.com/rapanti/fimm"
 
 [project.scripts]
 train = "fimm.train:main"
