@@ -555,6 +555,13 @@ def build_default_parser():
         help="number of epochs to train (default: 100)",
     )
     group.add_argument(
+        "--fidelity",
+        type=int,
+        default=None,
+        metavar="N",
+        help="number of epochs to train (defaults to --epochs)",
+    )
+    group.add_argument(
         "--epoch-repeats",
         type=float,
         default=0.0,
@@ -1573,6 +1580,9 @@ def main():
         _logger.info(
             f'Scheduled epochs: {num_epochs}. LR stepped per {"epoch" if lr_scheduler.t_in_epochs else "update"}.'  # type: ignore
         )
+
+    if args.fidelity is not None:
+        num_epochs = args.fidelity
 
     results = []
     try:
