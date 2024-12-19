@@ -1,43 +1,6 @@
 import torch.nn as nn
 
 
-class FineTuningModel(nn.Module):
-    """
-    A wrapper of the original model for fine-tuning.
-    """
-
-    def __init__(self, model: nn.Module):
-        """
-        Args:
-            model (nn.Module): The original model.
-        """
-        super().__init__()
-        self._orig_mod = model
-
-    def forward(self, x):
-        """
-        Forward a batch of input data through the model.
-
-        Args:
-            x (torch.Tensor): The input data.
-
-        Returns:
-            logits (torch.Tensor): The output of the model.
-            pre_logits (torch.Tensor): The output of the model before the final
-                classification layer.
-        """
-        # Compute the feature representation of the input data
-        feat = self._orig_mod.forward_features(x)
-
-        # Compute the output of the model before the final classification layer
-        pre_logits = self._orig_mod.forward_head(feat, pre_logits=True)
-
-        # Compute the output of the model
-        logits = self._orig_mod.forward_head(feat)
-
-        return logits, pre_logits
-
-
 def reset_head(model, args):
     """
     Reset the head of a model to the given number of classes.
@@ -57,9 +20,7 @@ def reset_head(model, args):
     model.reset_classifier(num_classes=args.num_classes, global_pool=pool)
 
 
-def create_finetuning_model(
-    model: nn.Module, args
-) -> nn.Module:
+def prepare_model(model: nn.Module, args):
     """
     Create a fine-tuning model from a given model.
 
@@ -72,10 +33,10 @@ def create_finetuning_model(
     """
     # reset the classifier/head of the model
     reset_head(model, args)
-    
+
     total_params: int = sum(param.numel() for param in model.parameters())
 
-    #freeze model parameters
+    # freeze model parameters
     if args.linear_probing:
         for param in model.parameters():
             param.requires_grad = False
@@ -87,11 +48,12 @@ def create_finetuning_model(
                 num_frozen += param.numel()
             else:
                 break
-    # unfreezing classifier/head, always used for finetuning 
+    # unfreezing classifier/head, always used for finetuning
     for param in model.get_classifier().parameters():
         param.requires_grad = True
 
     trainable_params: int = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"Total params: {total_params}, Trainable params: {trainable_params}")
-
-    return FineTuningModel(model)
+    print(
+        f"Total params: {total_params} | Trainable params: {trainable_params} "
+        f"({trainable_params / total_params * 100:.2f}%)"
+    )
