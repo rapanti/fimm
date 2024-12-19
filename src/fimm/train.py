@@ -59,7 +59,7 @@ from .finetuning.strategies.regularization import (
     SPRegularization,
 )
 from .finetuning.strategies.normalization import stochnorm
-from .finetuning.utils import create_finetuning_model
+from .finetuning.utils import prepare_model
 
 try:
     from apex import amp
@@ -1027,7 +1027,7 @@ def build_default_parser():
         help="BSS (Batch Spectral Shrinkage) regularization (default: 0.0)",
     )
     group.add_argument(
-        "--cotuning",
+        "--cotuning-reg",
         type=float,
         default=0.0,
         metavar="WEIGHT",
@@ -1230,13 +1230,13 @@ def main():
 
     # setup fine-tune loss functions
     finetune_loss_fn = []
-    if args.bss_reg:
+    if args.bss_reg > 0.0:
         finetune_loss_fn.append(BatchSpectralShrinkage(weight=args.bss_reg))
-    if args.sp_reg:
+    if args.sp_reg > 0.0:
         finetune_loss_fn.append(SPRegularization(source_model, model, weight=args.sp_reg))
-    if args.delta_reg:
+    if args.delta_reg > 0.0:
         finetune_loss_fn.append(BehavioralRegularization(source_model, weight=args.delta_reg))
-    if args.cotuning:
+    if args.cotuning_reg > 0.0:
         fsuf = args.dataset.lower() if args.dataset else os.path.basename(args.data_dir.rstrip("/"))
         file_name = f"{args.model}_{fsuf}.npy"
         cache_dir = utils.get_outdir(os.path.join(args.output, "relationships"))
@@ -1257,10 +1257,10 @@ def main():
             use_prefetcher=args.prefetcher,
         )
         relationship = Relationship(cotuning_loader, source_model, device, args, cache)
-        finetune_loss_fn.append(CoTuningLoss(relationship, args.cotuning))
+        finetune_loss_fn.append(CoTuningLoss(relationship, args.cotuning_reg))
 
     # prepare model for fine-tuning
-    model = create_finetuning_model(model, args)
+    prepare_model(model, args)
 
     if args.stoch_norm:
         model = stochnorm.convert_model(model)
@@ -1744,10 +1744,12 @@ def train_one_epoch(
 
         def _forward():
             with amp_autocast():
-                output, feature = model(input)
+                inter = model.forward_features(input)
+                feature = model.forward_head(inter, pre_logits=True)
+                output = model.forward_head(inter)
                 loss = loss_fn(output, target)
-                for _fn in finetune_loss_fn:
-                    loss += _fn(x=input, feature=feature, output=output, target=target)
+                for fn in finetune_loss_fn:
+                    loss += fn(x=input, feature=feature, output=output, target=target)
             if accum_steps > 1:
                 loss /= accum_steps
             return loss

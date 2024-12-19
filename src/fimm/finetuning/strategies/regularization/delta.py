@@ -63,6 +63,8 @@ class SPRegularization(nn.Module):
         output = 0.0
         source_weight = dict(self.source_model.named_parameters())
         for name, param in self.target_model.named_parameters():
+            if source_weight[name].shape != param.shape:
+                continue
             if param.requires_grad:
                 output += self.weight * torch.norm(param - source_weight[name]) ** 2
 
